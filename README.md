@@ -117,7 +117,7 @@ export OPENAI_BASE_URL=https://your-service-url/v1
 **确保已安装 ImageMagick 后**，运行以下命令：
 
 ```bash
-pip install -r https://raw.githubusercontent.com/shiyuanpei/markitdown/main/requirements.txt
+pip install -r https://github.com/shiyuanpei/markitdown/raw/main/requirements.txt
 pip install git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown
 ```
 
