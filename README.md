@@ -137,6 +137,8 @@ export OPENAI_BASE_URL=https://your-service-url/v1
 
 **确保已安装 ImageMagick 后**，按顺序运行以下命令：
 
+### Linux/macOS 或 Windows PowerShell
+
 ```bash
 # 1. 安装增强版 docxlatex（Unicode 符号映射）
 pip install git+https://github.com/shiyuanpei/docxlatex.git@main
@@ -146,6 +148,25 @@ pip install git+https://github.com/shiyuanpei/python-mammoth.git@master
 
 # 3. 安装增强版 markitdown（包含 office2md 工具）
 pip install "git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown"
+```
+
+### Windows Git Bash 环境
+
+⚠️ **注意**：如果在 Git Bash 中遇到 `fatal: unable to find remote helper for 'https'` 错误，请使用 Windows 命令提示符（CMD）执行安装：
+
+```bash
+# 使用 cmd 执行 pip 命令
+cmd //c "pip install git+https://github.com/shiyuanpei/docxlatex.git@main"
+cmd //c "pip install git+https://github.com/shiyuanpei/python-mammoth.git@master"
+cmd //c "pip install git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown"
+```
+
+或者直接在 Windows 命令提示符（CMD）中运行：
+
+```cmd
+pip install git+https://github.com/shiyuanpei/docxlatex.git@main
+pip install git+https://github.com/shiyuanpei/python-mammoth.git@master
+pip install git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown
 ```
 
 ⚠️ **重要**：必须按照上述顺序安装，以确保增强版的 docxlatex 和 python-mammoth 被正确使用。
