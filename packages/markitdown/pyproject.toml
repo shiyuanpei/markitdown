@@ -35,6 +35,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all = [
+  "git+https://github.com/shiyuanpei/docxlatex.git@main",
   "python-pptx",
   "mammoth~=1.11.0",
   "pandas",
@@ -50,7 +51,7 @@ all = [
   "azure-identity"
 ]
 pptx = ["python-pptx"]
-docx = ["mammoth~=1.11.0", "lxml"]
+docx = ["mammoth~=1.11.0", "lxml", "git+https://github.com/shiyuanpei/docxlatex.git@main"]
 xlsx = ["pandas", "openpyxl"]
 xls = ["pandas", "xlrd"]
 pdf = ["pdfminer.six"]
@@ -69,6 +70,7 @@ path = "src/markitdown/__about__.py"
 
 [project.scripts]
 markitdown = "markitdown.__main__:main"
+office2md = "markitdown.office2md:main"
 
 [tool.hatch.envs.default]
 features = ["all"]
