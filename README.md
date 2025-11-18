@@ -122,6 +122,93 @@ pip install -r https://github.com/shiyuanpei/markitdown/raw/main/requirements.tx
 
 💡 **就这么简单**！这一条命令会自动安装增强版的 docxlatex、python-mammoth 和 markitdown（包含 office2md 工具）。
 
+## 从 PyPI 安装（无需 Git）
+
+如果您的系统没有安装 Git，可以使用以下方法：
+
+```bash
+# 1. 下载 requirements.txt
+# 访问 https://github.com/shiyuanpei/markitdown/raw/main/requirements.txt
+# 保存文件到本地(如 C:\Users\YourName\Downloads\requirements.txt)
+
+# 2. 使用本地文件安装
+pip install -r C:\Users\YourName\Downloads\requirements.txt
+```
+
+或者,直接使用浏览器下载并安装 wheel 文件：
+
+```bash
+# 1. 访问以下链接下载 whl 文件:
+# https://github.com/shiyuanpei/docxlatex/releases
+# https://github.com/shiyuanpei/python-mammoth/releases
+# https://github.com/shiyuanpei/markitdown/releases
+
+# 2. 依次安装下载的 whl 文件:
+pip install docxlatex-*.whl
+pip install mammoth-*.whl
+pip install markitdown-*.whl
+```
+
+⚠️ **注意**：PyPI 安装方法需要项目发布 wheel 文件到 GitHub Releases。推荐使用第一种方法（从 GitHub 安装）。
+
+## 使用方法
+
+### 命令行工具
+
+安装后提供两个命令：
+
+#### 1. office2md（推荐，简化版）
+
+```bash
+# 转换单个文件
+office2md document.docx
+
+# 批量转换
+office2md *.docx *.pptx
+
+# 输出到指定目录
+office2md report.docx -o output/
+```
+
+#### 2. markitdown（完整版，更多选项）
+
+```bash
+# 基本转换
+markitdown document.docx -o output.md
+
+# 启用 LLM 图片描述
+markitdown slides.pptx -o slides.md --llm-client openai
+
+# 转换并查看
+markitdown paper.docx | less
+```
+
+### Python API
+
+```python
+from markitdown import MarkItDown
+
+# 基本使用
+md = MarkItDown()
+result = md.convert("technical_report.docx")
+print(result.text_content)
+
+# 启用 LLM 图片描述
+from openai import OpenAI
+md = MarkItDown(llm_client=OpenAI(), llm_model="gpt-4-vision-preview")
+result = md.convert("presentation.pptx")
+```
+
+## 支持的文件格式
+
+- **DOCX** - Word 文档（公式 + 图片完整支持）
+- **PPTX** - PowerPoint 演示文稿（公式 + 图片完整支持）
+- **XLSX** - Excel 表格
+- **PDF** - PDF 文档（文本提取）
+- **图片** - PNG, JPG, GIF 等（LLM 描述）
+- **音频** - MP3, WAV 等（转录）
+- **其他** - HTML, ZIP, EPUB 等
+
 ### 依赖关系
 
 本项目通过 fork 和增强三个核心库实现功能：
