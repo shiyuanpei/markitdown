@@ -1,248 +1,345 @@
-# MarkItDown
+# markitdown - 增强版
 
-[![PyPI](https://img.shields.io/pypi/v/markitdown.svg)](https://pypi.org/project/markitdown/)
-![PyPI - Downloads](https://img.shields.io/pypi/dd/markitdown)
-[![Built by AutoGen Team](https://img.shields.io/badge/Built%20by-AutoGen%20Team-blue)](https://github.com/microsoft/autogen)
+本仓库是 [markitdown](https://github.com/microsoft/markitdown) 的 fork 版本，专门针对中文技术文档和数学公式的转换进行了增强。
 
-> [!TIP]
-> MarkItDown now offers an MCP (Model Context Protocol) server for integration with LLM applications like Claude Desktop. See [markitdown-mcp](https://github.com/microsoft/markitdown/tree/main/packages/markitdown-mcp) for more information.
+## 新增功能概览
 
-> [!IMPORTANT]
-> Breaking changes between 0.0.1 to 0.1.0:
-> * Dependencies are now organized into optional feature-groups (further details below). Use `pip install 'markitdown[all]'` to have backward-compatible behavior. 
-> * convert\_stream() now requires a binary file-like object (e.g., a file opened in binary mode, or an io.BytesIO object). This is a breaking change from the previous version, where it previously also accepted text file-like objects, like io.StringIO.
-> * The DocumentConverter class interface has changed to read from file-like streams rather than file paths. *No temporary files are created anymore*. If you are the maintainer of a plugin, or custom DocumentConverter, you likely need to update your code. Otherwise, if only using the MarkItDown class or CLI (as in these examples), you should not need to change anything.
+### 1. 数学公式增强
 
-MarkItDown is a lightweight Python utility for converting various files to Markdown for use with LLMs and related text analysis pipelines. To this end, it is most comparable to [textract](https://github.com/deanmalmgren/textract), but with a focus on preserving important document structure and content as Markdown (including: headings, lists, tables, links, etc.) While the output is often reasonably presentable and human-friendly, it is meant to be consumed by text analysis tools -- and may not be the best option for high-fidelity document conversions for human consumption.
+#### 1.1 行间公式自动空行
+为行间公式（`$$...$$`）后自动添加两个空行，防止公式在 Markdown 中粘连。
 
-MarkItDown currently supports the conversion from:
+**问题**：
+```markdown
+$$公式1$$
+$$公式2$$
+$$公式3$$
+```
+公式会连在一起显示。
 
-- PDF
-- PowerPoint
-- Word
-- Excel
-- Images (EXIF metadata and OCR)
-- Audio (EXIF metadata and speech transcription)
-- HTML
-- Text-based formats (CSV, JSON, XML)
-- ZIP files (iterates over contents)
-- Youtube URLs
-- EPubs
-- ... and more!
+**解决方案**：
+```markdown
+$$公式1$$
 
-## Why Markdown?
 
-Markdown is extremely close to plain text, with minimal markup or formatting, but still
-provides a way to represent important document structure. Mainstream LLMs, such as
-OpenAI's GPT-4o, natively "_speak_" Markdown, and often incorporate Markdown into their
-responses unprompted. This suggests that they have been trained on vast amounts of
-Markdown-formatted text, and understand it well. As a side benefit, Markdown conventions
-are also highly token-efficient.
+$$公式2$$
 
-## Prerequisites
-MarkItDown requires Python 3.10 or higher. It is recommended to use a virtual environment to avoid dependency conflicts.
 
-With the standard Python installation, you can create and activate a virtual environment using the following commands:
+$$公式3$$
+```
+
+#### 1.2 OMML Base64 解码
+解码来自 mammoth 的 Base64 编码的 OMML 公式占位符，还原为正确的 LaTeX 代码。
+
+**处理流程**：
+```
+⟨OMML:$:YmFzZTY0X2RhdGE=⟩  →  $\LaTeX代码$
+```
+
+#### 1.3 MathType 公式支持
+
+支持 Word 文档中的 **MathType** 和 **Equation Editor** 公式。
+
+**公式类型**：
+- **内置公式编辑器** (Microsoft Equation) - 使用 OMML 格式存储
+- **MathType** - 第三方公式编辑器，可能使用不同格式
+
+**处理机制**：
+1. OMML 格式公式：通过 docxlatex 转换为 LaTeX
+2. MathType 公式：如果可识别，尝试提取 LaTeX 表示
+3. 图像形式的公式：提取为图片文件
+
+**兼容性**：
+- 新版 Word (2007+) 的内置公式 - 完全支持
+- MathType 6.x/7.x - 部分支持
+- 旧版 Equation Editor 3.0 - 基本支持
+
+### 2. 图像处理增强
+
+#### 2.1 WMF/EMF 自动转 PNG
+自动检测并转换 WMF/EMF 格式图像为 PNG，因为 Markdown 不支持 WMF/EMF 显示。
+
+**技术特性**：
+- 使用 ImageMagick 转换
+- 高质量输出（600 DPI）
+- 白色背景，RGB 色彩空间
+- 转换成功后自动删除原始 WMF/EMF 文件
+- 转换失败时优雅降级，保留原文件
+
+**转换参数**：
+```bash
+magick -density 600 input.wmf \
+       -background white \
+       -alpha remove \
+       -colorspace RGB \
+       -quality 100 \
+       output.png
+```
+
+#### 2.2 LLM 图像描述生成
+
+集成 LLM (大语言模型) 能力，自动为图像生成 Markdown 格式的 alt 文本描述。
+
+**功能特性**：
+- 自动识别图像内容
+- 生成详细的中文描述
+- 支持技术图表、流程图、示意图等
+- 可选功能，需要配置 LLM API
+
+**使用场景**：
+```markdown
+![LLM自动生成的图像描述](image_001.png)
+```
+
+**配置要求**：
+- OpenAI API 或兼容的 LLM 服务
+- 设置环境变量：`OPENAI_API_KEY`
+
+**LLM 提示词模板**：
+```
+描述这张图片的内容，使用简洁的中文。
+重点关注：技术细节、数据关系、流程步骤。
+```
+
+**隐私说明**：
+- LLM 描述功能默认关闭
+- 图像数据发送到配置的 LLM 服务
+- 建议在处理敏感文档时禁用此功能
+
+
+
+### 3. PPTX 处理增强
+
+#### 3.1 幻灯片结构保留
+
+将 PowerPoint 幻灯片转换为 Markdown 时保持层次结构。
+
+**转换规则**：
+- 每张幻灯片 → 二级标题 (`##`)
+- 幻灯片编号自动添加
+- 标题和正文内容分离
+- 列表和表格结构保留
+
+**示例输出**：
+```markdown
+## 幻灯片 1: 项目概述
+
+项目背景介绍...
+
+## 幻灯片 2: 技术架构
+
+- 前端框架
+- 后端服务
+- 数据库设计
+```
+
+#### 3.2 PPTX 图像提取
+
+自动提取幻灯片中的图片、图表和 SmartArt。
+
+**提取内容**：
+- 插入的图片文件
+- 图表 (Chart) - 转换为图片
+- SmartArt - 转换为图片
+- 形状组合 - 转换为图片
+
+**命名规则**：
+```
+演示文稿_images/
+  ├── slide_01_image_001.png
+  ├── slide_01_image_002.png
+  ├── slide_02_chart_001.png
+  └── slide_03_smartart_001.png
+```
+
+#### 3.3 PPTX 中的公式
+
+支持 PowerPoint 中插入的数学公式。
+
+**公式来源**：
+- 内置公式编辑器 - 转换为 LaTeX
+- MathType 公式 - 尝试提取 LaTeX
+- 公式图片 - 保留为图像
+
+**转换示例**：
+```markdown
+## 幻灯片 5: 控制方程
+
+雷诺方程：
+
+$$\frac{\partial p}{\partial \theta} + \frac{\partial p}{\partial r} = 0$$
+```
+
+### 4. 集成 office2md 工具
+
+提供简化的命令行界面，专门用于 Office 文档到 Markdown 的转换。
+
+**特性**：
+- 自动检测文件类型（DOCX, PPTX, XLSX）
+- 自动创建图像输出目录
+- 批量处理支持
+- 详细的转换日志
+
+**使用方式**：
+```bash
+# 转换单个文件
+office2md document.docx
+
+# 转换多个文件
+office2md file1.docx file2.pptx file3.xlsx
+```
+
+### 5. 依赖增强
+
+集成了增强版的依赖库：
+- **docxlatex** - Unicode 符号自动转换
+- **python-mammoth** - OMML Base64 编码
+
+## 修改的文件
+
+### converters/_docx_converter.py
+
+1. **decode_omml_placeholder()** 函数：
+   - Base64 解码 OMML 占位符
+   - 为行间公式添加空行
+
+2. **DocxImageWriter.__call__()** 方法：
+   - WMF/EMF 检测和转换逻辑
+   - ImageMagick 集成
+
+### converters/_pptx_converter.py
+
+1. **幻灯片结构处理**：
+   - 保留幻灯片编号和标题层次
+   - 正文内容格式化
+
+2. **图像和图表提取**：
+   - SmartArt 转图片
+   - Chart 图表处理
+   - 形状组合渲染
+
+### 新增文件
+
+- `src/markitdown/office2md.py` - office2md 命令行工具
+- `DEVELOPER.md` - 开发者文档
+- `README_OFFICE2MD.md` - office2md 使用指南
+- `office2md.spec` - PyInstaller 打包配置
+
+### pyproject.toml
+
+更新依赖配置：
+```toml
+[project.optional-dependencies]
+all = [
+  "git+https://github.com/shiyuanpei/docxlatex.git@main",
+  # ... 其他依赖
+]
+docx = [
+  "mammoth~=1.11.0",
+  "lxml",
+  "git+https://github.com/shiyuanpei/docxlatex.git@main"
+]
+
+[project.scripts]
+markitdown = "markitdown.__main__:main"
+office2md = "markitdown.office2md:main"
+```
+
+## 完整转换流程
+
+```
+Word DOCX
+    ↓
+[mammoth] 读取 DOCX，提取 OMML
+    ↓
+[docxlatex] OMML → LaTeX (Unicode符号转换)
+    ↓
+[mammoth] LaTeX → Base64 编码 → 占位符
+    ↓
+[mammoth] 生成 HTML (包含占位符)
+    ↓
+[markdownify] HTML → Markdown (占位符保持不变)
+    ↓
+[markitdown] 解码占位符 → LaTeX
+[markitdown] WMF/EMF → PNG
+[markitdown] 添加公式空行
+    ↓
+最终 Markdown 输出
+```
+
+## 安装
+
+从 GitHub 安装：
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+pip install git+https://github.com/shiyuanpei/markitdown.git@main
 ```
 
-If using `uv`, you can create a virtual environment with:
+安装后会同时提供 `markitdown` 和 `office2md` 两个命令。
+
+## 使用示例
+
+### 基本使用
 
 ```bash
-uv venv --python=3.12 .venv
-source .venv/bin/activate
-# NOTE: Be sure to use 'uv pip install' rather than just 'pip install' to install packages in this virtual environment
+# 使用 office2md（推荐）
+office2md technical_paper.docx
+
+# 使用 markitdown
+markitdown technical_paper.docx -o output.md
 ```
 
-If you are using Anaconda, you can create a virtual environment with:
+### 批量转换
 
 ```bash
-conda create -n markitdown python=3.12
-conda activate markitdown
+office2md *.docx
 ```
 
-## Installation
+### 包含数学公式的文档
 
-To install MarkItDown, use pip: `pip install 'markitdown[all]'`. Alternatively, you can install it from the source:
+输入 (Word):
+```
+雷诺方程：
 
-```bash
-git clone git@github.com:microsoft/markitdown.git
-cd markitdown
-pip install -e 'packages/markitdown[all]'
+∂p/∂θ + ∂p/∂r = 0
+
+其中 p 为压力，θ 为角度。
 ```
 
-## Usage
+输出 (Markdown):
+```markdown
+雷诺方程：
 
-### Command-Line
+$$\partial p/\partial \theta + \partial p/\partial r = 0$$
 
-```bash
-markitdown path-to-file.pdf > document.md
+
+其中 p 为压力，θ 为角度。
 ```
 
-Or use `-o` to specify the output file:
+## 技术文档应用场景
 
-```bash
-markitdown path-to-file.pdf -o document.md
-```
+本增强版特别适合：
+- 机械工程技术文档
+- 流体力学论文
+- 数学物理教材
+- 包含大量公式和图像的科技文档
+- 中文学术文档
 
-You can also pipe content:
+## 与原项目的关系
 
-```bash
-cat path-to-file.pdf | markitdown
-```
+- 保持与上游 markitdown 的兼容性
+- 所有增强功能都是非侵入式添加
+- 可以作为 markitdown 的直接替代品使用
 
-### Optional Dependencies
-MarkItDown has optional dependencies for activating various file formats. Earlier in this document, we installed all optional dependencies with the `[all]` option. However, you can also install them individually for more control. For example:
+## 相关项目
 
-```bash
-pip install 'markitdown[pdf, docx, pptx]'
-```
+- [docxlatex 增强版](https://github.com/shiyuanpei/docxlatex) - Unicode 符号映射
+- [python-mammoth 增强版](https://github.com/shiyuanpei/python-mammoth) - OMML Base64 编码
 
-will install only the dependencies for PDF, DOCX, and PPTX files.
+## 原始项目
 
-At the moment, the following optional dependencies are available:
+原始 markitdown 项目: https://github.com/microsoft/markitdown
 
-* `[all]` Installs all optional dependencies
-* `[pptx]` Installs dependencies for PowerPoint files
-* `[docx]` Installs dependencies for Word files
-* `[xlsx]` Installs dependencies for Excel files
-* `[xls]` Installs dependencies for older Excel files
-* `[pdf]` Installs dependencies for PDF files
-* `[outlook]` Installs dependencies for Outlook messages
-* `[az-doc-intel]` Installs dependencies for Azure Document Intelligence
-* `[audio-transcription]` Installs dependencies for audio transcription of wav and mp3 files
-* `[youtube-transcription]` Installs dependencies for fetching YouTube video transcription
+## 许可证
 
-### Plugins
-
-MarkItDown also supports 3rd-party plugins. Plugins are disabled by default. To list installed plugins:
-
-```bash
-markitdown --list-plugins
-```
-
-To enable plugins use:
-
-```bash
-markitdown --use-plugins path-to-file.pdf
-```
-
-To find available plugins, search GitHub for the hashtag `#markitdown-plugin`. To develop a plugin, see `packages/markitdown-sample-plugin`.
-
-### Azure Document Intelligence
-
-To use Microsoft Document Intelligence for conversion:
-
-```bash
-markitdown path-to-file.pdf -o document.md -d -e "<document_intelligence_endpoint>"
-```
-
-More information about how to set up an Azure Document Intelligence Resource can be found [here](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/how-to-guides/create-document-intelligence-resource?view=doc-intel-4.0.0)
-
-### Python API
-
-Basic usage in Python:
-
-```python
-from markitdown import MarkItDown
-
-md = MarkItDown(enable_plugins=False) # Set to True to enable plugins
-result = md.convert("test.xlsx")
-print(result.text_content)
-```
-
-Document Intelligence conversion in Python:
-
-```python
-from markitdown import MarkItDown
-
-md = MarkItDown(docintel_endpoint="<document_intelligence_endpoint>")
-result = md.convert("test.pdf")
-print(result.text_content)
-```
-
-To use Large Language Models for image descriptions (currently only for pptx and image files), provide `llm_client` and `llm_model`:
-
-```python
-from markitdown import MarkItDown
-from openai import OpenAI
-
-client = OpenAI()
-md = MarkItDown(llm_client=client, llm_model="gpt-4o", llm_prompt="optional custom prompt")
-result = md.convert("example.jpg")
-print(result.text_content)
-```
-
-### Docker
-
-```sh
-docker build -t markitdown:latest .
-docker run --rm -i markitdown:latest < ~/your-file.pdf > output.md
-```
-
-## Contributing
-
-This project welcomes contributions and suggestions. Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
-
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-
-### How to Contribute
-
-You can help by looking at issues or helping review PRs. Any issue or PR is welcome, but we have also marked some as 'open for contribution' and 'open for reviewing' to help facilitate community contributions. These are of course just suggestions and you are welcome to contribute in any way you like.
-
-<div align="center">
-
-|            | All                                                          | Especially Needs Help from Community                                                                                                      |
-| ---------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Issues** | [All Issues](https://github.com/microsoft/markitdown/issues) | [Issues open for contribution](https://github.com/microsoft/markitdown/issues?q=is%3Aissue+is%3Aopen+label%3A%22open+for+contribution%22) |
-| **PRs**    | [All PRs](https://github.com/microsoft/markitdown/pulls)     | [PRs open for reviewing](https://github.com/microsoft/markitdown/pulls?q=is%3Apr+is%3Aopen+label%3A%22open+for+reviewing%22)              |
-
-</div>
-
-### Running Tests and Checks
-
-- Navigate to the MarkItDown package:
-
-  ```sh
-  cd packages/markitdown
-  ```
-
-- Install `hatch` in your environment and run tests:
-
-  ```sh
-  pip install hatch  # Other ways of installing hatch: https://hatch.pypa.io/dev/install/
-  hatch shell
-  hatch test
-  ```
-
-  (Alternative) Use the Devcontainer which has all the dependencies installed:
-
-  ```sh
-  # Reopen the project in Devcontainer and run:
-  hatch test
-  ```
-
-- Run pre-commit checks before submitting a PR: `pre-commit run --all-files`
-
-### Contributing 3rd-party Plugins
-
-You can also contribute by creating and sharing 3rd party plugins. See `packages/markitdown-sample-plugin` for more details.
-
-## Trademarks
-
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
-trademarks or logos is subject to and must follow
-[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
+与原项目保持一致的 MIT 许可证。
