@@ -117,10 +117,13 @@ export OPENAI_BASE_URL=https://your-service-url/v1
 **确保已安装 ImageMagick 后**，运行以下命令：
 
 ```bash
-pip install git+https://github.com/shiyuanpei/docxlatex.git@main git+https://github.com/shiyuanpei/python-mammoth.git@master git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown
+pip install -r https://raw.githubusercontent.com/shiyuanpei/markitdown/main/requirements.txt
+pip install git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown
 ```
 
-💡 **Windows 用户提示**：如遇到 `fatal: unable to find remote helper for 'https'` 错误，请确保使用较新版本的 Git (2.30+)，并将 `C:\\Program Files\\Git\\bin` 放在 PATH 最前面。
+💡 **提示**：第一条命令会自动安装增强版的 docxlatex 和 python-mammoth 依赖。
+
+💡 **Windows 用户**：如遇到 Git HTTPS 错误，请确保使用 Git 2.30+ 版本，并将 `C:\\Program Files\\Git\\bin` 放在 PATH 最前面。
 
 ### 依赖关系
 
