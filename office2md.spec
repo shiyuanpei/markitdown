@@ -4,8 +4,19 @@ from pathlib import Path
 
 block_cipher = None
 
-# ImageMagick binary path
-imagemagick_path = r'C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe'
+# ImageMagick binary path - auto-detect from PATH
+imagemagick_path = shutil.which('magick')
+if not imagemagick_path:
+    # Try common installation paths
+    possible_paths = [
+        r'C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe',
+        r'C:\Program Files\ImageMagick\magick.exe',
+        r'C:\Program Files (x86)\ImageMagick\magick.exe',
+    ]
+    for path in possible_paths:
+        if os.path.exists(path):
+            imagemagick_path = path
+            break
 
 # Magika models path
 import sys

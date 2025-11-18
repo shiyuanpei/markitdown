@@ -4,16 +4,21 @@
 
 ## 核心改进
 
-### 原版 markitdown 的局限性
+### 与原版 markitdown 的对比
 
-Microsoft 的 markitdown 原版工具在转换 Office 文档时存在以下重大限制：
+| 功能 | 原版 markitdown | 本增强版 |
+|------|----------------|----------|
+| 文字提取 | ✅ | ✅ |
+| Word 内置公式 (OMML) | ❌ 不支持 | ✅ 完整支持 |
+| MathType 公式 | ❌ 不支持 | ✅ 部分支持 |
+| 图片提取 | ❌ 不支持 | ✅ 完整支持 |
+| WMF/EMF 转换 | ❌ | ✅ 自动转换 |
+| Unicode 符号 | ❌ | ✅ 80+ 符号映射 |
+| LLM 图片描述 | ⚠️ 基础支持 | ✅ 增强支持 |
+| 中文文档 | ❌ | ✅ 完整中文文档 |
 
-1. **不支持数学公式** - Word/PPT 中的公式无法转换，直接丢失
-2. **不提取图片** - 文档中的图片不会导出，只有文字内容
 
-这导致原版工具**无法处理技术文档、学术论文、工程报告**等包含大量公式和图表的文档。
-
-### 本增强版的核心功能
+## 本增强版的核心功能
 
 #### 1. 完整的数学公式支持 ⭐
 
@@ -99,15 +104,86 @@ Word/PPT 文档
    - 仓库：https://github.com/shiyuanpei/markitdown
    - 功能：统一转换接口 + 图片处理 + LLM 集成
 
+## 前置要求
+
+### ImageMagick（必需）
+
+本工具依赖 **ImageMagick** 进行图片格式转换（WMF/EMF → PNG）。
+
+**Windows 安装**：
+1. 下载：https://imagemagick.org/script/download.php#windows
+2. 选择推荐的安装包（如 `ImageMagick-7.1.1-Q16-HDRI-x64-dll.exe`）
+3. 安装时**务必勾选** "Add application directory to your system path"
+4. 安装后验证：打开命令行输入 `magick -version`
+
+**Linux 安装**：
+```bash
+# Ubuntu/Debian
+sudo apt-get install imagemagick
+
+# CentOS/RHEL
+sudo yum install imagemagick
+```
+
+**macOS 安装**：
+```bash
+brew install imagemagick
+```
+
+⚠️ **重要**：如果不安装 ImageMagick，WMF/EMF 图片将无法转换为 PNG，可能导致图片在 Markdown 中无法显示。
+
+### 2. LLM API（可选，用于图片智能描述）
+
+如果需要使用 LLM 自动生成图片描述功能，需要配置以下服务之一：
+
+#### 推荐：OpenRouter（支持多种模型）
+
+OpenRouter 是一个 LLM 聚合服务，支持 GPT-4 Vision、Claude 3 等多种视觉模型。
+
+**配置步骤**：
+1. 注册：https://openrouter.ai/
+2. 获取 API Key
+3. 设置环境变量：
+   ```bash
+   export OPENAI_API_KEY=your_openrouter_key
+   export OPENAI_BASE_URL=https://openrouter.ai/api/v1
+   ```
+
+**优势**：
+- 一个 API 访问多种模型
+- 按需付费，价格透明
+- 支持国内访问
+- 兼容 OpenAI API 格式
+
+#### 使用 OpenAI 官方
+
+```bash
+export OPENAI_API_KEY=your_openai_key
+# 不需要设置 BASE_URL
+```
+
+#### 使用其他兼容服务
+
+任何兼容 OpenAI API 格式的服务都可以使用：
+```bash
+export OPENAI_API_KEY=your_api_key
+export OPENAI_BASE_URL=https://your-service-url/v1
+```
+
+💡 **提示**：LLM 图片描述是可选功能，不配置也可以正常转换文档，只是图片不会有自动生成的描述文字。
+
+
 ## 安装方法
 
 ### 从 GitHub 安装（推荐）
+
+**确保已安装 ImageMagick 后**，运行：
 
 ```bash
 pip install git+https://github.com/shiyuanpei/markitdown.git@main
 ```
 
-这会自动安装所有增强版依赖（docxlatex、python-mammoth）。
+这会自动安装所有增强版 Python 依赖（docxlatex、python-mammoth）。
 
 ### 手动安装依赖（可选）
 
@@ -132,8 +208,17 @@ pip install git+https://github.com/shiyuanpei/markitdown.git@main
   - 安装后确保 `magick` 命令可用
 
 **可选**（用于 LLM 图片描述）：
-- OpenAI API 密钥或兼容的 LLM 服务
-- 环境变量：`export OPENAI_API_KEY=your_key`
+- OpenAI API 或兼容的 LLM 服务（推荐使用 **OpenRouter** 聚合服务）
+- 环境变量配置：
+  ```bash
+  # 使用 OpenAI
+  export OPENAI_API_KEY=your_openai_key
+
+  # 使用 OpenRouter（推荐，支持多种模型）
+  export OPENAI_API_KEY=your_openrouter_key
+  export OPENAI_BASE_URL=https://openrouter.ai/api/v1
+  ```
+- OpenRouter 注册：https://openrouter.ai/
 
 ## 使用方法
 
@@ -287,18 +372,6 @@ pyinstaller office2md.spec
 - **复杂公式**：极其复杂的嵌套公式可能需要手动调整
 - **LLM 成本**：图片描述功能需要调用 API，会产生费用
 - **ImageMagick 依赖**：WMF/EMF 转换需要安装 ImageMagick
-
-## 与原版 markitdown 的对比
-
-| 功能 | 原版 markitdown | 本增强版 |
-|------|----------------|----------|
-| 文字提取 | ✅ | ✅ |
-| 数学公式 | ❌ 不支持 | ✅ 完整支持 |
-| 图片提取 | ❌ 不支持 | ✅ 完整支持 |
-| WMF/EMF 转换 | ❌ | ✅ 自动转换 |
-| Unicode 符号 | ❌ | ✅ 80+ 符号映射 |
-| LLM 图片描述 | ⚠️ 基础支持 | ✅ 增强支持 |
-| 中文文档 | ❌ | ✅ 完整中文文档 |
 
 ## 贡献和反馈
 
