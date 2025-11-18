@@ -135,28 +135,20 @@ export OPENAI_BASE_URL=https://your-service-url/v1
 
 ## 从 GitHub 安装（推荐）
 
-**确保已安装 ImageMagick 后**，运行：
+**确保已安装 ImageMagick 后**，按顺序运行以下命令：
 
 ```bash
-pip install git+https://github.com/shiyuanpei/markitdown.git@main
-```
-
-这会自动安装所有增强版 Python 依赖（docxlatex、python-mammoth）。
-
-### 手动安装依赖（可选）
-
-如果需要单独安装各个组件：
-
-```bash
-# 1. 安装增强版 docxlatex
+# 1. 安装增强版 docxlatex（Unicode 符号映射）
 pip install git+https://github.com/shiyuanpei/docxlatex.git@main
 
-# 2. 安装增强版 python-mammoth
+# 2. 安装增强版 python-mammoth（OMML Base64 编码保护）
 pip install git+https://github.com/shiyuanpei/python-mammoth.git@master
 
-# 3. 安装增强版 markitdown
-pip install git+https://github.com/shiyuanpei/markitdown.git@main
+# 3. 安装增强版 markitdown（包含 office2md 工具）
+pip install "git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown"
 ```
+
+⚠️ **重要**：必须按照上述顺序安装，以确保增强版的 docxlatex 和 python-mammoth 被正确使用。
 
 ### 依赖关系
 
