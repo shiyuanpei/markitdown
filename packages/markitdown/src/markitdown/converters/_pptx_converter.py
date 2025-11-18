@@ -24,6 +24,64 @@ except ImportError:
     _dependency_exc_info = sys.exc_info()
 
 
+def split_and_merge_gif(input_gif, output_png='merged_frames.png'):
+    """
+    Split GIF into first, middle, and last frames, then merge horizontally to PNG
+    
+    Args:
+        input_gif: Input GIF file path
+        output_png: Output PNG file path (default: 'merged_frames.png')
+    
+    Returns:
+        output_png: Output file path
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        # If PIL is not available, just return None
+        return None
+    
+    # Open GIF file
+    gif = Image.open(input_gif)
+    
+    # Get total frame count
+    frame_count = 0
+    try:
+        while True:
+            gif.seek(frame_count)
+            frame_count += 1
+    except EOFError:
+        pass
+    
+    # Calculate middle frame index (for even numbers, take the earlier one)
+    middle_index = (frame_count // 2) - 1 if frame_count % 2 == 0 else frame_count // 2
+    
+    # Extract three key frames
+    gif.seek(0)
+    first_frame = gif.convert('RGBA')
+    
+    gif.seek(middle_index)
+    middle_frame = gif.convert('RGBA')
+    
+    gif.seek(frame_count - 1)
+    last_frame = gif.convert('RGBA')
+    
+    # Create horizontally merged image
+    width, height = first_frame.size
+    merged_image = Image.new('RGBA', (width * 3, height))
+    
+    # Paste three frames
+    merged_image.paste(first_frame, (0, 0))
+    merged_image.paste(middle_frame, (width, 0))
+    merged_image.paste(last_frame, (width * 2, 0))
+    
+    # Save as PNG
+    merged_image.save(output_png, 'PNG')
+    gif.close()
+    
+    return output_png
+
+
 ACCEPTED_MIME_TYPE_PREFIXES = [
     "application/vnd.openxmlformats-officedocument.presentationml",
 ]
@@ -82,6 +140,17 @@ class PptxConverter(DocumentConverter):
         presentation = pptx.Presentation(file_stream)
         md_content = ""
         slide_num = 0
+        image_counter = 0  # Track images across all slides
+        images_dir = kwargs.get("save_images_dir")  # Optional: directory to save images
+        llm_prompt_png = kwargs.get("llm_prompt")  # Optional: LLM prompt for images
+        
+        # LLM prompt for GIF merged images
+        llm_prompt_gif = (
+            "This is a composite image showing three frames from an animation "
+            "(start, middle, end) arranged horizontally. "
+            "Describe what this animation shows and what motion or change occurs "
+            "across these three frames in Chinese. " + (llm_prompt_png or "")
+        )
         for slide in presentation.slides:
             slide_num += 1
 
@@ -90,7 +159,7 @@ class PptxConverter(DocumentConverter):
             title = slide.shapes.title
 
             def get_shape_content(shape, **kwargs):
-                nonlocal md_content
+                nonlocal md_content, image_counter
                 # Pictures
                 if self._is_picture(shape):
                     # https://github.com/scanny/python-pptx/pull/512#issuecomment-1713100069
@@ -98,22 +167,78 @@ class PptxConverter(DocumentConverter):
                     llm_description = ""
                     alt_text = ""
 
+                    # Extract image metadata (needed for both LLM and non-LLM paths)
+                    image_filename = shape.image.filename
+                    image_extension = None
+                    if image_filename:
+                        image_extension = os.path.splitext(image_filename)[1]
+
+                    # Check if this is a GIF and convert it early (for both LLM and saving)
+                    content_type = shape.image.content_type or "image/png"
+                    is_gif = 'gif' in content_type.lower()
+                    image_blob_for_llm = shape.image.blob
+                    content_type_for_llm = content_type
+                    saved_path = None
+                    
+                    # Save all images (GIF and normal) in one place
+                    if images_dir:
+                        from pathlib import Path
+                        images_path = Path(images_dir)
+                        images_path.mkdir(parents=True, exist_ok=True)
+                        
+                        # Use sequential naming
+                        image_counter += 1
+                        
+                        if is_gif:
+                            # Save original GIF
+                            temp_filename = f"slide{slide_num}_image{image_counter}.gif"
+                            temp_path = images_path / temp_filename
+                            with open(temp_path, 'wb') as f:
+                                f.write(shape.image.blob)
+                            
+                            # Convert to merged PNG
+                            merged_filename = f"slide{slide_num}_image{image_counter}_merged.png"
+                            merged_path = images_path / merged_filename
+                            result = split_and_merge_gif(str(temp_path), str(merged_path))
+                            
+                            if result is not None:
+                                # Use merged PNG for both LLM and final output
+                                with open(merged_path, 'rb') as f:
+                                    image_blob_for_llm = f.read()
+                                content_type_for_llm = "image/png"
+                                saved_path = merged_path
+                                promptIn = llm_prompt_gif
+                            else:
+                                # Conversion failed, save original as PNG
+                                saved_path = images_path / f"slide{slide_num}_image{image_counter}.png"
+                                with open(saved_path, 'wb') as f:
+                                    f.write(shape.image.blob)
+                                image_blob_for_llm = shape.image.blob
+                                promptIn = llm_prompt_png
+                        else:
+                            # Normal image processing
+                            ext = image_extension or '.png'
+                            if not ext.startswith('.'):
+                                ext = '.' + ext
+                            saved_filename = f"slide{slide_num}_image{image_counter}{ext}"
+                            saved_path = images_path / saved_filename
+                            with open(saved_path, 'wb') as f:
+                                f.write(shape.image.blob)
+                            promptIn = llm_prompt_png
+
+
                     # Potentially generate a description using an LLM
                     llm_client = kwargs.get("llm_client")
                     llm_model = kwargs.get("llm_model")
                     if llm_client is not None and llm_model is not None:
                         # Prepare a file_stream and stream_info for the image data
-                        image_filename = shape.image.filename
-                        image_extension = None
-                        if image_filename:
-                            image_extension = os.path.splitext(image_filename)[1]
                         image_stream_info = StreamInfo(
-                            mimetype=shape.image.content_type,
+                            mimetype=content_type_for_llm,
                             extension=image_extension,
                             filename=image_filename,
                         )
 
-                        image_stream = io.BytesIO(shape.image.blob)
+                        image_stream = io.BytesIO(image_blob_for_llm)
 
                         # Caption the image
                         try:
@@ -122,10 +247,13 @@ class PptxConverter(DocumentConverter):
                                 image_stream_info,
                                 client=llm_client,
                                 model=llm_model,
-                                prompt=kwargs.get("llm_prompt"),
+                                prompt=promptIn
+                                #prompt=kwargs.get("llm_prompt"),
                             )
-                        except Exception:
+                            print(f"[LLM Description] Slide {slide_num}, Image {image_counter}: {llm_description}")
+                        except Exception as e:
                             # Unable to generate a description
+                            print(f"[LLM Description] Slide {slide_num}, Image {image_counter}: Failed - {e}")
                             pass
 
                     # Also grab any description embedded in the deck
@@ -147,8 +275,14 @@ class PptxConverter(DocumentConverter):
                         b64_string = base64.b64encode(blob).decode("utf-8")
                         md_content += f"\n![{alt_text}](data:{content_type};base64,{b64_string})\n"
                     else:
-                        # A placeholder name
-                        filename = re.sub(r"\W", "", shape.name) + ".jpg"
+                        # Use the saved path (already saved in L177 section)
+                        if saved_path is not None:
+                            # Use absolute path in markdown
+                            filename = f"{images_path.name}/{saved_path.name}"
+                        else:
+                            # A placeholder name (original behavior when no images_dir)
+                            filename = re.sub(r"\W", "", shape.name) + ".jpg"
+                        
                         md_content += "\n![" + alt_text + "](" + filename + ")\n"
 
                 # Tables

@@ -184,7 +184,9 @@ class MarkItDown:
             self.register_converter(WikipediaConverter())
             self.register_converter(YouTubeConverter())
             self.register_converter(BingSerpConverter())
-            self.register_converter(DocxConverter())
+            self.register_converter(
+                DocxConverter(llm_client=self._llm_client, llm_model=self._llm_model)
+            )
             self.register_converter(XlsxConverter())
             self.register_converter(XlsConverter())
             self.register_converter(PptxConverter())
