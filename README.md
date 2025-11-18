@@ -29,19 +29,6 @@
 - **行内公式** `$...$` 和 **行间公式** `$$...$$` 自动识别
 - **Unicode 数学符号自动转换** - ∂→\partial, θ→\theta, ∇→\nabla 等 80+ 符号
 
-**转换示例**：
-
-Word 文档中的公式：
-```
-雷诺方程：∂p/∂θ + ∂p/∂r = 0
-```
-
-转换后的 Markdown：
-```markdown
-雷诺方程：
-
-$$\partial p/\partial \theta + \partial p/\partial r = 0$$
-```
 
 ### 2. 智能图片处理 ⭐
 
@@ -52,14 +39,6 @@ $$\partial p/\partial \theta + \partial p/\partial r = 0$$
 - **LLM 图片描述** - 集成大语言模型，自动生成图片的详细中文描述（可选）
 - **高质量输出** - 600 DPI，保证技术图表清晰度
 
-**LLM 描述示例**：
-
-原始图片 → LLM 自动生成描述：
-```markdown
-![流体动力学润滑膜压力分布三维曲面图，显示压力在轴承中心区域达到峰值](image_001.png)
-```
-
-这使得 Markdown 文档对视障用户友好，也便于后续的文档检索和分析。
 
 ## 安装方法
 
@@ -135,43 +114,13 @@ export OPENAI_BASE_URL=https://your-service-url/v1
 
 ## 从 GitHub 安装（推荐）
 
-**确保已安装 ImageMagick 后**，按顺序运行以下命令：
-
-### 方法一：直接从 GitHub 安装（推荐，适用于 Linux/macOS）
+**确保已安装 ImageMagick 后**，运行以下命令：
 
 ```bash
-# 1. 安装增强版 docxlatex（Unicode 符号映射）
-pip install git+https://github.com/shiyuanpei/docxlatex.git@main
-
-# 2. 安装增强版 python-mammoth（OMML Base64 编码保护）
-pip install git+https://github.com/shiyuanpei/python-mammoth.git@master
-
-# 3. 安装增强版 markitdown（包含 office2md 工具）
-pip install "git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown"
+pip install git+https://github.com/shiyuanpei/docxlatex.git@main git+https://github.com/shiyuanpei/python-mammoth.git@master git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown
 ```
 
-### 方法二：手动克隆后安装（推荐，适用于 Windows）
-
-⚠️ **Windows 用户推荐**：如果遇到 `fatal: unable to find remote helper for 'https'` 错误，使用此方法：
-
-```bash
-# 1. 克隆仓库
-git clone https://github.com/shiyuanpei/docxlatex.git
-git clone https://github.com/shiyuanpei/python-mammoth.git
-git clone https://github.com/shiyuanpei/markitdown.git
-
-# 2. 从本地目录安装
-pip install -e ./docxlatex
-pip install -e ./python-mammoth
-pip install -e ./markitdown/packages/markitdown
-```
-
-**优点**：
-- 避免 Git HTTPS 协议问题
-- 可以随时更新（git pull）并立即生效
-- 方便调试和修改
-
-⚠️ **重要**：必须按照上述顺序安装，以确保增强版的 docxlatex 和 python-mammoth 被正确使用。
+💡 **Windows 用户提示**：如遇到 `fatal: unable to find remote helper for 'https'` 错误，请确保使用较新版本的 Git (2.30+)，并将 `C:\\Program Files\\Git\\bin` 放在 PATH 最前面。
 
 ### 依赖关系
 
@@ -202,7 +151,7 @@ pip install -e ./markitdown/packages/markitdown
   ```bash
   # 使用 OpenAI
   export OPENAI_API_KEY=your_openai_key
-
+  
   # 使用 OpenRouter（推荐，支持多种模型）
   export OPENAI_API_KEY=your_openrouter_key
   export OPENAI_BASE_URL=https://openrouter.ai/api/v1
