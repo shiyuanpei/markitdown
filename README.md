@@ -118,10 +118,9 @@ export OPENAI_BASE_URL=https://your-service-url/v1
 
 ```bash
 pip install -r https://github.com/shiyuanpei/markitdown/raw/main/requirements.txt
-pip install git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown
 ```
 
-💡 **提示**：第一条命令会自动安装增强版的 docxlatex 和 python-mammoth 依赖。
+💡 **就这么简单**！这一条命令会自动安装增强版的 docxlatex、python-mammoth 和 markitdown（包含 office2md 工具）。
 
 ### 依赖关系
 
@@ -158,138 +157,6 @@ pip install git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=p
   export OPENAI_BASE_URL=https://openrouter.ai/api/v1
   ```
 - OpenRouter 注册：https://openrouter.ai/
-
-## 使用方法
-
-### 命令行工具
-
-安装后提供两个命令：
-
-#### 1. office2md（推荐，简化版）
-
-```bash
-# 转换单个文件
-office2md document.docx
-
-# 批量转换
-office2md *.docx *.pptx
-
-# 输出到指定目录
-office2md report.docx -o output/
-```
-
-#### 2. markitdown（完整版，更多选项）
-
-```bash
-# 基本转换
-markitdown document.docx -o output.md
-
-# 启用 LLM 图片描述
-markitdown slides.pptx -o slides.md --llm-client openai
-
-# 转换并查看
-markitdown paper.docx | less
-```
-
-### Python API
-
-```python
-from markitdown import MarkItDown
-
-# 基本使用
-md = MarkItDown()
-result = md.convert("technical_report.docx")
-print(result.text_content)
-
-# 启用 LLM 图片描述
-from openai import OpenAI
-md = MarkItDown(llm_client=OpenAI(), llm_model="gpt-4-vision-preview")
-result = md.convert("presentation.pptx")
-```
-
-## 支持的文件格式
-
-- **DOCX** - Word 文档（公式 + 图片完整支持）
-- **PPTX** - PowerPoint 演示文稿（公式 + 图片完整支持）
-- **XLSX** - Excel 表格
-- **PDF** - PDF 文档（文本提取）
-- **图片** - PNG, JPG, GIF 等（LLM 描述）
-- **音频** - MP3, WAV 等（转录）
-- **其他** - HTML, ZIP, EPUB 等
-
-## 典型应用场景
-
-本增强版特别适合：
-
-✅ **机械工程技术文档** - 大量公式和示意图
-✅ **流体力学/传热学论文** - 偏微分方程和数值结果
-✅ **数学物理教材** - 复杂公式和理论推导
-✅ **科研报告** - 实验数据图表和分析
-✅ **学术论文** - 中英文混合，公式密集
-✅ **工程手册** - 技术规范和计算公式
-
-## 详细功能说明
-
-### 数学公式增强
-
-#### OMML 到 LaTeX 转换
-- 通过 docxlatex 将 Office MathML 转换为标准 LaTeX
-- 支持分数、根式、上下标、积分、求和、矩阵等
-
-#### Unicode 符号映射
-- 80+ 常用数学符号自动转换
-- 希腊字母：α, β, γ, δ, θ, λ, μ, ω, Γ, Δ, Σ, Ω...
-- 运算符：∂, ∇, ∞, ∑, ∏, ±, ×, ÷, ·...
-- 关系符：≈, ≠, ≡, ≤, ≥, ∈, ⊂, ⊃...
-
-#### 公式格式优化
-- 行间公式自动添加空行，防止粘连
-- 行内公式和行间公式自动识别
-- LaTeX 代码完整性保护（Base64 编码）
-
-### 图片处理增强
-
-#### 自动图片提取
-- DOCX/PPTX 中的所有图片自动导出
-- 按文档结构组织（如按幻灯片编号）
-- 支持嵌入图片和链接图片
-
-#### WMF/EMF 格式转换
-- 自动检测 Windows 元文件格式
-- 使用 ImageMagick 转换为 PNG
-- 高质量输出：600 DPI, RGB 色彩空间
-- 转换失败时优雅降级
-
-#### LLM 图片描述（可选）
-- 集成 OpenAI GPT-4 Vision 或兼容模型
-- 自动生成详细中文描述
-- 识别技术图表、流程图、数据图等
-- 可自定义提示词模板
-
-### PPTX 特殊处理
-
-#### 幻灯片结构保留
-- 每张幻灯片转为二级标题
-- 自动添加幻灯片编号
-- 保持标题和正文层次
-
-#### 图表和 SmartArt
-- Chart 图表转为图片
-- SmartArt 图形转为图片
-- 形状组合渲染为图片
-
-## 打包为可执行文件
-
-提供 PyInstaller 配置文件，可打包为独立 .exe 文件：
-
-```bash
-cd d:/python/markitdown
-pyinstaller office2md.spec
-```
-
-生成的 `dist/office2md.exe` 可在没有 Python 环境的 Windows 机器上直接运行。
-
-## 技术架构
 
 ### 增强的转换流程
 

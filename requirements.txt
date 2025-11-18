@@ -1,2 +1,3 @@
 git+https://github.com/shiyuanpei/docxlatex.git@main
 git+https://github.com/shiyuanpei/python-mammoth.git@master
+git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown
