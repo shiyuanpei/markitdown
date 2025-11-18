@@ -137,7 +137,7 @@ export OPENAI_BASE_URL=https://your-service-url/v1
 
 **确保已安装 ImageMagick 后**，按顺序运行以下命令：
 
-### Linux/macOS 或 Windows PowerShell
+### 方法一：直接从 GitHub 安装（推荐，适用于 Linux/macOS）
 
 ```bash
 # 1. 安装增强版 docxlatex（Unicode 符号映射）
@@ -150,24 +150,26 @@ pip install git+https://github.com/shiyuanpei/python-mammoth.git@master
 pip install "git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown"
 ```
 
-### Windows Git Bash 环境
+### 方法二：手动克隆后安装（推荐，适用于 Windows）
 
-⚠️ **注意**：如果在 Git Bash 中遇到 `fatal: unable to find remote helper for 'https'` 错误，请使用 Windows 命令提示符（CMD）执行安装：
+⚠️ **Windows 用户推荐**：如果遇到 `fatal: unable to find remote helper for 'https'` 错误，使用此方法：
 
 ```bash
-# 使用 cmd 执行 pip 命令
-cmd //c "pip install git+https://github.com/shiyuanpei/docxlatex.git@main"
-cmd //c "pip install git+https://github.com/shiyuanpei/python-mammoth.git@master"
-cmd //c "pip install git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown"
+# 1. 克隆仓库
+git clone https://github.com/shiyuanpei/docxlatex.git
+git clone https://github.com/shiyuanpei/python-mammoth.git
+git clone https://github.com/shiyuanpei/markitdown.git
+
+# 2. 从本地目录安装
+pip install -e ./docxlatex
+pip install -e ./python-mammoth
+pip install -e ./markitdown/packages/markitdown
 ```
 
-或者直接在 Windows 命令提示符（CMD）中运行：
-
-```cmd
-pip install git+https://github.com/shiyuanpei/docxlatex.git@main
-pip install git+https://github.com/shiyuanpei/python-mammoth.git@master
-pip install git+https://github.com/shiyuanpei/markitdown.git@main#subdirectory=packages/markitdown
-```
+**优点**：
+- 避免 Git HTTPS 协议问题
+- 可以随时更新（git pull）并立即生效
+- 方便调试和修改
 
 ⚠️ **重要**：必须按照上述顺序安装，以确保增强版的 docxlatex 和 python-mammoth 被正确使用。
 
