@@ -10,7 +10,7 @@
 |------|----------------|----------|
 | 文字提取 | ✅ | ✅ |
 | Word 内置公式 (OMML) | ❌ 不支持 | ✅ 完整支持 |
-| MathType 公式 | ❌ 不支持 | ✅ 部分支持 |
+| MathType 公式 | ❌ 不支持 | ✅ 完整支持 |
 | 图片提取 | ❌ 不支持 | ✅ 完整支持 |
 | WMF/EMF 转换 | ❌ | ✅ 自动转换 |
 | Unicode 符号 (docxlatex) | ❌ 不转换 | ✅ 80+ 符号映射 |
@@ -60,6 +60,10 @@ $$\partial p/\partial \theta + \partial p/\partial r = 0$$
 ```
 
 这使得 Markdown 文档对视障用户友好，也便于后续的文档检索和分析。
+
+## 安装方法
+
+#
 
 ## 技术架构
 
@@ -173,9 +177,7 @@ export OPENAI_BASE_URL=https://your-service-url/v1
 💡 **提示**：LLM 图片描述是可选功能，不配置也可以正常转换文档，只是图片不会有自动生成的描述文字。
 
 
-## 安装方法
-
-### 从 GitHub 安装（推荐）
+## 从 GitHub 安装（推荐）
 
 **确保已安装 ImageMagick 后**，运行：
 

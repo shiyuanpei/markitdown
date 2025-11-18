@@ -10,7 +10,7 @@
 |------|----------------|----------|
 | 文字提取 | ✅ | ✅ |
 | Word 内置公式 (OMML) | ❌ 不支持 | ✅ 完整支持 |
-| MathType 公式 | ❌ 不支持 | ✅ 部分支持 |
+| MathType 公式 | ❌ 不支持 | ✅ 完整支持 |
 | 图片提取 | ❌ 不支持 | ✅ 完整支持 |
 | WMF/EMF 转换 | ❌ | ✅ 自动转换 |
 | Unicode 符号 (docxlatex) | ❌ 不转换 | ✅ 80+ 符号映射 |
@@ -20,7 +20,7 @@
 
 ## 本增强版的核心功能
 
-#### 1. 完整的数学公式支持 ⭐
+### 1. 完整的数学公式支持 ⭐
 
 **将 Word/PPT 中的数学公式完整转换为 LaTeX 格式**，支持：
 
@@ -43,7 +43,7 @@ Word 文档中的公式：
 $$\partial p/\partial \theta + \partial p/\partial r = 0$$
 ```
 
-#### 2. 智能图片处理 ⭐
+### 2. 智能图片处理 ⭐
 
 **自动提取并处理文档中的所有图片**，包括：
 
@@ -61,50 +61,9 @@ $$\partial p/\partial \theta + \partial p/\partial r = 0$$
 
 这使得 Markdown 文档对视障用户友好，也便于后续的文档检索和分析。
 
-## 技术架构
+## 安装方法
 
-### 增强的转换流程
-
-```
-Word/PPT 文档
-    ↓
-[python-mammoth 增强版]
-  - 读取 OMML 公式
-  - Base64 编码保护 LaTeX
-    ↓
-[docxlatex 增强版]
-  - OMML → LaTeX 转换
-  - Unicode 符号映射
-    ↓
-[markitdown 增强版]
-  - 解码 LaTeX 公式
-  - WMF/EMF → PNG 转换
-  - LLM 图片描述（可选）
-  - 格式优化
-    ↓
-完整的 Markdown 输出
-  - 公式 ✓
-  - 图片 ✓
-  - 文字 ✓
-```
-
-### 依赖关系
-
-本项目通过 fork 和增强三个核心库实现功能：
-
-1. **docxlatex** - Unicode 符号到 LaTeX 的映射
-   - 仓库：https://github.com/shiyuanpei/docxlatex
-   - 功能：80+ Unicode 数学符号自动转换
-
-2. **python-mammoth** - OMML 公式 Base64 编码保护
-   - 仓库：https://github.com/shiyuanpei/python-mammoth
-   - 功能：防止 LaTeX 代码被 HTML 转义破坏
-
-3. **markitdown** (本项目) - 整合转换和图片处理
-   - 仓库：https://github.com/shiyuanpei/markitdown
-   - 功能：统一转换接口 + 图片处理 + LLM 集成
-
-## 前置要求
+### 前置要求
 
 ### ImageMagick（必需）
 
@@ -117,6 +76,7 @@ Word/PPT 文档
 4. 安装后验证：打开命令行输入 `magick -version`
 
 **Linux 安装**：
+
 ```bash
 # Ubuntu/Debian
 sudo apt-get install imagemagick
@@ -165,6 +125,7 @@ export OPENAI_API_KEY=your_openai_key
 #### 使用其他兼容服务
 
 任何兼容 OpenAI API 格式的服务都可以使用：
+
 ```bash
 export OPENAI_API_KEY=your_api_key
 export OPENAI_BASE_URL=https://your-service-url/v1
@@ -172,10 +133,7 @@ export OPENAI_BASE_URL=https://your-service-url/v1
 
 💡 **提示**：LLM 图片描述是可选功能，不配置也可以正常转换文档，只是图片不会有自动生成的描述文字。
 
-
-## 安装方法
-
-### 从 GitHub 安装（推荐）
+## 从 GitHub 安装（推荐）
 
 **确保已安装 ImageMagick 后**，运行：
 
@@ -199,6 +157,22 @@ pip install git+https://github.com/shiyuanpei/python-mammoth.git@master
 # 3. 安装增强版 markitdown
 pip install git+https://github.com/shiyuanpei/markitdown.git@main
 ```
+
+### 依赖关系
+
+本项目通过 fork 和增强三个核心库实现功能：
+
+1. **docxlatex** - Unicode 符号到 LaTeX 的映射
+   - 仓库：https://github.com/shiyuanpei/docxlatex
+   - 功能：80+ Unicode 数学符号自动转换
+
+2. **python-mammoth** - OMML 公式 Base64 编码保护
+   - 仓库：https://github.com/shiyuanpei/python-mammoth
+   - 功能：防止 LaTeX 代码被 HTML 转义破坏
+
+3. **markitdown** (本项目) - 整合转换和图片处理
+   - 仓库：https://github.com/shiyuanpei/markitdown
+   - 功能：统一转换接口 + 图片处理 + LLM 集成
 
 ### 额外依赖
 
@@ -349,6 +323,33 @@ pyinstaller office2md.spec
 ```
 
 生成的 `dist/office2md.exe` 可在没有 Python 环境的 Windows 机器上直接运行。
+
+## 技术架构
+
+### 增强的转换流程
+
+```
+Word/PPT 文档
+    ↓
+[python-mammoth 增强版]
+  - 读取 OMML 公式
+  - Base64 编码保护 LaTeX
+    ↓
+[docxlatex 增强版]
+  - OMML → LaTeX 转换
+  - Unicode 符号映射
+    ↓
+[markitdown 增强版]
+  - 解码 LaTeX 公式
+  - WMF/EMF → PNG 转换
+  - LLM 图片描述（可选）
+  - 格式优化
+    ↓
+完整的 Markdown 输出
+  - 公式 ✓
+  - 图片 ✓
+  - 文字 ✓
+```
 
 ## 技术细节
 
